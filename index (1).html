@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    const apiUrl = 'https://sample-1-cc8r.onrender.com/users';
+
+    // Function to fetch and display all users
+    function fetchUsers() {
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(users => {
+          const userList = document.getElementById('userList');
+          userList.innerHTML = ''; // Clear existing list
+
+          users.forEach(user => {
+            const userCard = document.createElement('div');
+            userCard.classList.add('max-w-sm', 'rounded', 'overflow-hidden', 'shadow-lg', 'bg-white', 'p-4', 'm-4');
+
+            userCard.innerHTML = `
+              <div class="font-bold text-xl mb-2">${user.name}</div>
+              <p class="text-gray-700 text-base">Email: ${user.email}</p>
+              <p class="text-gray-700 text-base">Age: ${user.age}</p>
+              <div class="flex justify-between mt-4">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="editUser(${user.id}, '${user.name}', '${user.email}', ${user.age})">Edit</button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700" onclick="deleteUser(${user.id})">Delete</button>
+              </div>
+            `;
+            userList.appendChild(userCard);
+          });
+        })
+        .catch(error => console.error('Error fetching users:', error));
+    }
+
+    // Function to create a new user
+    function createUser(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const age = document.getElementById('age').value;
+
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, age })
+      })
+      .then(response => response.json())
+      .then(() => {
+        fetchUsers(); // Refresh the list of users
+        document.getElementById('addUserForm').reset();
+      })
+      .catch(error => console.error('Error creating user:', error));
+    }
+
+    // Function to edit an existing user
+    function editUser(id, name, email, age) {
+      document.getElementById('name').value = name;
+      document.getElementById('email').value = email;
+      document.getElementById('age').value = age;
+      document.getElementById('submitBtn').textContent = 'Update User';
+      document.getElementById('submitBtn').onclick = function(event) {
+        updateUser(event, id);
+      };
+    }
+
+    // Function to update a user
+    function updateUser(event, id) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const age = document.getElementById('age').value;
+
+      fetch(`${apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, age })
+      })
+      .then(response => response.json())
+      .then(() => {
+        fetchUsers(); // Refresh the list of users
+        document.getElementById('addUserForm').reset();
+        document.getElementById('submitBtn').textContent = 'Add User';
+        document.getElementById('submitBtn').onclick = createUser;
+      })
+      .catch(error => console.error('Error updating user:', error));
+    }
+
+    // Function to delete a user
+    function deleteUser(id) {
+      fetch(`${apiUrl}/${id}`, {
+        method: 'DELETE'
+      })
+      .then(() => {
+        fetchUsers(); // Refresh the list of users
+      })
+      .catch(error => console.error('Error deleting user:', error));
+    }
+
+    // Fetch users on page load
+    window.onload = fetchUsers;
+  </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <div class="max-w-3xl mx-auto p-6 bg-white rounded shadow-lg mt-8">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">User Management</h1>
+
+    <!-- Form to Add or Update User -->
+    <form id="addUserForm" onsubmit="createUser(event)" class="space-y-4">
+      <input type="text" id="name" placeholder="Name" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <input type="email" id="email" placeholder="Email" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <input type="number" id="age" placeholder="Age" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button type="submit" id="submitBtn" class="w-full bg-blue-500 text-white p-3 rounded-md hover:bg-blue-700">Add User</button>
+    </form>
+  </div>
+
+  <h2 class="text-2xl font-bold text-center text-gray-800 mt-12">All Users</h2>
+  <div id="userList" class="flex flex-wrap justify-center mt-6"></div>
+
+</body>
+</html>
